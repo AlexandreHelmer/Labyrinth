@@ -1,11 +1,14 @@
 Un jeu de labyrinthe simple pour les enfants.
 
-#Build
+# Build
 
-cordova platform add android
-cordova build android
+À la racine, lancer:
 
-#TODO, améliorations
+```cordova platform add android```
+
+```cordova build android```
+
+# TODO, améliorations & idées
 * modale quand on gagne la partie plutôt qu'une alert()
 * musiques de fond en fonction du thème
 * page d'accueil plus agréable... 
@@ -14,3 +17,4 @@ cordova build android
   * avec un bouton dédié
   * quand on perd le focus
 * images libres de droit
+* localisation ?
