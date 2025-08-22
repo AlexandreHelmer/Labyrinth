@@ -55,6 +55,28 @@
     </div>
   </div>
 </div>
+
+<!-- === MODALE FIN DE JEU === -->
+<div class="modal fade" id="victoryModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content p-3 bg-dark text-light">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          Bravo!
+        </h5>
+      </div>
+      <div class="modal-body">
+        <span id="victoryMessage"></span>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-success" data-bs-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script src="js/bootstrap_utils.js"></script>
 <script src="js/sounds.js"></script>
 <script src="js/images.js"></script>
 <script src="js/maze_generator.js"></script>
@@ -64,7 +86,13 @@
 /* === CONFIGURATION === */
 const CONFIG = {
   canvas: { maxSize: 100 },
-  gameplay: { initialDelay: 120, minDelay: 40, accelStep: 10, tolerance: 5, difficulty: "easy"},
+  gameplay: {
+    initialDelay: 120,
+    minDelay: 40,
+    accelStep: 10,
+    tolerance: 5,
+    difficulty: "easy"
+  },
   positions: {
     start: { x: 0, y: 1 },
     endOffset: { x: 1, y: 2 }
@@ -228,48 +256,6 @@ const DIFFICULTY = {
   hard:   { size: {x:21, y:29}, label: "Difficile" },
   impossible : {size: {x:35, y:45}, label: "Impossible"}
 };
-
-
-
-
-/* === Génération du menu === */
-function buildMenu(options, currentOption, elementId, cb_select) {
-  
-  function fillOption(key) {
-    let containerHTML = ""
-    if ("icon" in options[key])
-      containerHTML += `<img id="currentIcon" src="images/${options[key].icon}" width="48" height="48">`;
-    
-    if ("label" in options[key])
-      containerHTML += `<span class="ms-3" id="currentLabel">${options[key].label}</span>`;   
-    
-    return containerHTML
-  }
-  
-  const container = document.getElementById(elementId)
-  container.innerHTML = `
-      <button class="btn btn-dark dropdown-toggle" data-bs-toggle="dropdown">
-        ${fillOption(currentOption)}
-      </button>
-      <ul class="dropdown-menu bg-dark"></ul>`;
-  
-  const menu = container.querySelector(".dropdown-menu");
-  for (let key in options) {
-    let li = document.createElement("li");
-    li.innerHTML = `<a class="dropdown-item text-light" href="#">
-        ${fillOption(key)}
-    </a>`
-
-    li.querySelector(".dropdown-item")
-      .addEventListener("click", () => {
-        container.querySelector("button").innerHTML = fillOption(key)
-        cb_select(key);
-    });
-
-    menu.appendChild(li);
-  }
-}
-
 
 
 // fleches directionnelles 
@@ -485,7 +471,9 @@ function holdButton(btn,dx,dy){
   }
   function stop(){ clearTimeout(timeoutId); timeoutId=null; }
   btn.addEventListener("mousedown",start); btn.addEventListener("touchstart",start);
-  document.addEventListener("mouseup",stop); document.addEventListener("mouseleave",stop); document.addEventListener("touchend",stop);
+  document.addEventListener("mouseup",stop);
+  document.addEventListener("mouseleave",stop);
+  document.addEventListener("touchend",stop);
 }
 holdButton(document.getElementById("btnUp"),0,-1);
 holdButton(document.getElementById("btnDown"),0,1);
@@ -543,9 +531,8 @@ async function startGame(){
   resetZoom();
   stopAllMusic();
   playMusic("bgm");
-
-  const modal = bootstrap.Modal.getInstance(document.getElementById('difficultyModal'));
-  if(modal) modal.hide();
+  
+  hideModals()
   clearInterval(timerInterval);
   startTimer();
 }
@@ -555,8 +542,11 @@ function winGame() {
     clearInterval(timerInterval);
     
     stopAllMusic();
-    playSound("win");
-    setTimeout(() => alert(`Bravo, tu as gagné en ${display_time(elapsed, true)} !`), 100);
+    playSound("win")
+    
+    document.querySelector("#victoryModal #victoryMessage")
+      .innerHTML=`Tu as gagné en ${display_time(elapsed, true)} !`
+    setTimeout(()=>showModal("victoryModal"),100)
 }
 
 document.addEventListener("DOMContentLoaded", () => {
