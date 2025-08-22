@@ -16,5 +16,6 @@ Un jeu de labyrinthe simple pour les enfants.
 * Gérer la mise en pause:
   * avec un bouton dédié
   * quand on perd le focus
+* avec un bouton "Quitter"
 * images libres de droit
 * localisation ?
