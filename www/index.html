@@ -142,7 +142,7 @@ function move(dx,dy){
 }
 
 function attemptMove(tx,ty){
-  let candidates=[];
+  let candidates = [];
   for(let dy=-CONFIG.gameplay.tolerance;dy<=CONFIG.gameplay.tolerance;dy++){
     for(let dx=-CONFIG.gameplay.tolerance;dx<=CONFIG.gameplay.tolerance;dx++){
       const cx=player.x+dx, cy=player.y+dy;
