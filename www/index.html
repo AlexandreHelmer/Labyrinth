@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Jeu de labyrinthe</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="css/style.css" rel="stylesheet" />
+</head>
+<body class="pt-0">
+
+<div class="navbar navbar-dark bg-dark px-2">
+  <span>Le labyrinthe de Dimitri et Nicolas</span>
+  <span id="timer" class="navbar-text me-3">--:--</span>
+  <button class="btn btn-sm btn-outline-info me-2" data-bs-toggle="modal" data-bs-target="#difficultyModal">Nouvelle partie</button>
+  <button id="btnResetZoom" class="btn btn-sm btn-outline-light me-2" onclick="resetZoom()">Reset zoom</button>
+  <button id="btnToggleArrows" class="btn btn-sm btn-outline-light">Flèches</button>
+</div>
+
+<div id="game-container" style="position:relative; overflow:hidden; touch-action:none;">
+  <div id="canvas-wrapper" style="transform-origin: 0 0;">
+    <canvas id="mazeCanvas"></canvas>
+  </div>
+
+  <!-- Flèches overlay -->
+  <div id="controls" class="d-none" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); text-align:center;">
+    <div>
+      <button id="btnUp" class="btn btn-secondary btn-lg">↑</button>
+    </div>
+    <div>
+      <button id="btnLeft" class="btn btn-secondary btn-lg">←</button>
+      <button id="btnDown" class="btn btn-secondary btn-lg mx-2">↓</button>
+      <button id="btnRight" class="btn btn-secondary btn-lg">→</button>
+    </div>
+  </div>
+</div>
+
+<!-- === MODALE NOUVELLE PARTIE === -->
+<div class="modal fade" id="difficultyModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content p-3 text-center bg-dark text-light">
+      <h5 class="mb-3">Nouvelle partie</h5>
+
+        <div id="loadingMenu" class="spinner-border text-light" role="status">
+        </div>
+      <!-- Choix du skin -->
+      <div class="dropdown mb-3" id="skinMenu"></div>
+      
+      <!-- Choix du theme -->
+      <div class="dropdown mb-3" id="themeMenu"></div>
+
+      <!-- Choix de la difficulté -->
+      <div class="dropdown mb-3" id="difficultyMenu"></div>
+
+      <button id="startButton" class="btn btn-success" onclick="startGame()" disabled>Démarrer</button>
+    </div>
+  </div>
+</div>
+<script src="js/sounds.js"></script>
+<script src="js/images.js"></script>
+<script src="js/maze_generator.js"></script>
+<script src="js/example_tilesets.js"></script>
+<script src="js/maze_drawing.js"></script>
+<script>
+/* === CONFIGURATION === */
+const CONFIG = {
+  canvas: { maxSize: 100 },
+  gameplay: { initialDelay: 120, minDelay: 40, accelStep: 10, tolerance: 5, difficulty: "easy"},
+  positions: {
+    start: { x: 0, y: 1 },
+    endOffset: { x: 1, y: 2 }
+  },
+  path: { color: "rgba(255,45,45,0.7)", width: 5 },
+  skin: "cat",
+  theme: "classic"
+};
+
+
+/* === VARIABLES === */
+let canvas=document.getElementById("mazeCanvas")
+let ctx=canvas.getContext("2d");
+
+let mazeCols, mazeRows, cellSize;
+let maze, player, goal;
+let path=[];
+let timerInterval, startTime;
+
+let gameActive=false;
+
+let mazeLayer=null;
+let elapsed=0;
+
+/* === DESSIN === */
+
+function drawPlayerLayer() {
+  if(path.length>1){
+    ctx.strokeStyle = CONFIG.path.color;
+    ctx.lineWidth = CONFIG.path.width;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo( path[0].x*cellSize+cellSize/2,  path[0].y*cellSize+cellSize/2);
+    for (let i=1;i<path.length;i++){
+      const step = path[i];
+      ctx.lineTo( step.x*cellSize+cellSize/2,  step.y*cellSize+cellSize/2);
+    }
+    ctx.stroke();
+  }
+  
+ // (async ()=> {
+    const imgGoal = getImageSync(SKINS[CONFIG.skin].goal);
+    const imgPlayer = getImageSync(SKINS[CONFIG.skin].player);
+  
+    ctx.drawImage(imgGoal,  goal.x*cellSize,  goal.y*cellSize, cellSize, cellSize);
+    ctx.drawImage(imgPlayer,   player.x*cellSize,  player.y*cellSize, cellSize, cellSize);
+  
+ // })();
+}
+
+function redrawScene(){
+  renderMazeFrame();
+}
+
+/* === DEPLACEMENT === */
+function move(dx,dy){
+  if(!gameActive) return false;
+  const nx=player.x+dx, ny=player.y+dy;
+  if(nx>=0&&ny>=0&&nx<mazeCols&&ny<mazeRows&&maze[ny][nx]===0){
+    player.x=nx;
+    player.y=ny;
+    if(path.length>1){
+      const prev=path[path.length-2];
+      if(prev.x===nx && prev.y===ny) path.pop();
+      else path.push({x:nx,y:ny});
+    } else path.push({x:nx,y:ny});
+    redrawScene();
+    if(player.x===goal.x && player.y===goal.y){
+      winGame();
+    }
+    return true;
+  }
+  return false;
+}
+
+function attemptMove(tx,ty){
+  let candidates=[];
+  for(let dy=-CONFIG.gameplay.tolerance;dy<=CONFIG.gameplay.tolerance;dy++){
+    for(let dx=-CONFIG.gameplay.tolerance;dx<=CONFIG.gameplay.tolerance;dx++){
+      const cx=player.x+dx, cy=player.y+dy;
+      if(cx<0||cy<0||cx>=mazeCols||cy>=mazeRows) continue;
+      const dist=Math.abs(tx-cx)+Math.abs(ty-cy);
+      if(dist<=CONFIG.gameplay.tolerance) candidates.push({x:cx,y:cy,d:dist});
+    }
+  }
+  candidates.sort((a,b)=>a.d-b.d);
+  for(let c of candidates){
+    if(c.x===player.x||c.y===player.y){
+      if(pathClear(maze, player.x,player.y,c.x,c.y)){
+        while(player.x!==c.x||player.y!==c.y){
+          const dx=Math.sign(c.x-player.x), dy=Math.sign(c.y-player.y);
+          move(dx,dy);
+        }
+        break;
+      }
+    }
+  }
+}
+
+
+
+
+/* === SKINS === */
+const SKINS = {
+  mouse: {
+    icon: "mouse.png",
+    player: "mouse2.png",
+    goal: "cheese.png",
+    label: "Souris"
+  },
+  cat: {
+    icon: "cat.png",
+    player: "cat.png",
+    goal: "milk.png",
+    label: "Chat"
+  },
+  dog: {
+    icon: "dog.png",
+    player: "dog.png",
+    goal: "bone.png",
+    label: "Chien" 
+  },
+  butterfly: {
+    icon: "butterfly.png",
+    player: "butterfly.png",
+    goal: "flower.png",
+    label: "Papillon"
+  },
+  pandaroux: {
+    icon: "panda-roux.png",
+    player: "panda-roux.png",
+    goal: "bamboo.png",
+    label: "Panda roux"
+  },
+  bear: {
+    icon: "bear.png",
+    player: "bear.png",
+    goal: "honey.png",
+    label: "Ours"
+  },
+  fox: {
+    icon: "fox.png",
+    player: "fox.png",
+    goal: "mouse2.png",
+    label: "Renard"
+  },
+  squirrel: {
+    icon: "squirrel.png",
+    player: "squirrel.png",
+    goal: "chestnut.png",
+    label: "Écureuil"
+  },
+  
+};
+
+/* === DIFFICULTÉS === */
+const DIFFICULTY = {
+  easy:   { size: {x:11, y:15}, label: "Facile" },
+  medium: { size: {x:17, y:23}, label: "Moyen" },
+  hard:   { size: {x:21, y:29}, label: "Difficile" },
+  impossible : {size: {x:35, y:45}, label: "Impossible"}
+};
+
+
+
+
+/* === Génération du menu === */
+function buildMenu(options, currentOption, elementId, cb_select) {
+  
+  function fillOption(key) {
+    let containerHTML = ""
+    if ("icon" in options[key])
+      containerHTML += `<img id="currentIcon" src="images/${options[key].icon}" width="48" height="48">`;
+    
+    if ("label" in options[key])
+      containerHTML += `<span class="ms-3" id="currentLabel">${options[key].label}</span>`;   
+    
+    return containerHTML
+  }
+  
+  const container = document.getElementById(elementId)
+  container.innerHTML = `
+      <button class="btn btn-dark dropdown-toggle" data-bs-toggle="dropdown">
+        ${fillOption(currentOption)}
+      </button>
+      <ul class="dropdown-menu bg-dark"></ul>`;
+  
+  const menu = container.querySelector(".dropdown-menu");
+  for (let key in options) {
+    let li = document.createElement("li");
+    li.innerHTML = `<a class="dropdown-item text-light" href="#">
+        ${fillOption(key)}
+    </a>`
+
+    li.querySelector(".dropdown-item")
+      .addEventListener("click", () => {
+        container.querySelector("button").innerHTML = fillOption(key)
+        cb_select(key);
+    });
+
+    menu.appendChild(li);
+  }
+}
+
+
+
+// fleches directionnelles 
+document.getElementById("btnToggleArrows").addEventListener("click", () => {
+  document.getElementById("controls").classList.toggle("d-none");
+});
+
+
+
+/* Zoom et affichage */
+
+const wrapper = document.getElementById("canvas-wrapper");
+const container = document.getElementById("game-container");
+
+
+const MAX_SCALE = 2;
+let scale = 1, minScale = 1;
+let originX = 0, originY = 0;
+
+function clampScale(s){ return Math.max(minScale, Math.min(MAX_SCALE, s)); }
+
+function getContainerRect(){ return container.getBoundingClientRect(); }
+
+function updateMinScale(){
+  const r = getContainerRect();
+  minScale = Math.min(r.width / canvas.width, r.height / canvas.height);
+  if (!isFinite(minScale) || minScale <= 0) minScale = 1;
+  if (scale < minScale) scale = minScale;
+  clampPan();
+  applyTransform();
+}
+
+function clampPan(){
+  const r = getContainerRect();
+  const scaledW = canvas.width * scale;
+  const scaledH = canvas.height * scale;
+
+  const canCenterX = scaledW <= r.width;
+  const canCenterY = scaledH <= r.height;
+
+  const maxX = canCenterX ? (r.width - scaledW)/2 : 0;
+  const minX = canCenterX ? maxX : (r.width - scaledW);
+
+  const maxY = canCenterY ? (r.height - scaledH)/2 : 0;
+  const minY = canCenterY ? maxY : (r.height - scaledH);
+
+  originX = Math.max(minX, Math.min(maxX, originX));
+  originY = Math.max(minY, Math.min(maxY, originY));
+}
+
+function applyTransform(){
+  wrapper.style.transform = `translate(${originX}px, ${originY}px) scale(${scale})`;
+}
+
+// Zoom autour d’un point (coordonnées client, relatives au conteneur)
+function setScaleAt(newScale, cx, cy){
+  const r = getContainerRect();
+  const prev = scale;
+  scale = clampScale(newScale);
+
+  // garder (cx,cy) stable à l’écran
+  const sx = (cx - r.left - originX);
+  const sy = (cy - r.top  - originY);
+  const k = scale / prev;
+  originX = cx - r.left - sx * k;
+  originY = cy - r.top  - sy * k;
+
+  clampPan();
+  applyTransform();
+}
+
+function getCanvasCoords(clientX, clientY){
+  const r = getContainerRect();
+  return {
+    x: (clientX - r.left - originX) / scale,
+    y: (clientY - r.top  - originY) / scale
+  };
+}
+
+// Reset = tout le plateau visible et centré
+function resetZoom(){
+  updateMinScale();
+  scale = minScale;
+  const r = getContainerRect();
+  originX = (r.width  - canvas.width  * scale)/2;
+  originY = (r.height - canvas.height * scale)/2;
+  applyTransform();
+}
+
+
+// --- états pour le pinch/pan ---
+let gestureActive = false;
+let suppressTapUntil = 0;
+let pinch = null; // { baseScale, baseDist, prevCenter:{x,y} }
+
+function midPoint(touches){
+  return {
+    x:(touches[0].clientX + touches[1].clientX)/2,
+    y:(touches[0].clientY + touches[1].clientY)/2
+  };
+}
+function dist2(touches){
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.hypot(dx,dy);
+}
+function panBy(dx,dy){
+  originX += dx;
+  originY += dy;
+  clampPan();
+  applyTransform();
+}
+
+// --- Pinch start/move/end ---
+canvas.addEventListener("touchstart", e => {
+  if (e.touches.length === 2) {
+    gestureActive = true;
+    pinch = {
+      baseScale: scale,
+      baseDist : dist2(e.touches),
+      prevCenter: midPoint(e.touches)
+    };
+  }
+}, { passive:false });
+
+canvas.addEventListener("touchmove", e => {
+  if (e.touches.length === 2 && pinch) {
+    e.preventDefault();
+    const c = midPoint(e.touches);
+    const k = dist2(e.touches) / pinch.baseDist;
+    const target = clampScale(pinch.baseScale * k);
+
+    // 1) Zoom autour du centre courant
+    setScaleAt(target, c.x, c.y);
+
+    // 2) Puis pan par le déplacement du centre du pinch
+    const dx = c.x - pinch.prevCenter.x;
+    const dy = c.y - pinch.prevCenter.y;
+    panBy(dx, dy);
+
+    pinch.prevCenter = c;
+  }
+}, { passive:false });
+
+canvas.addEventListener("touchend", e => {
+  if (gestureActive && e.touches.length < 2) {
+    //suppressTapUntil = performance.now() + 350; // évite le "tap" synthétisé
+    gestureActive = false;
+    pinch = null;
+  }
+}, { passive:false });
+
+
+// Initialisation
+//window.addEventListener("resize", () => { updateMinScale(); applyTransform(); });
+window.addEventListener("load", () => resetZoom());
+
+
+
+
+/* === GLISSER === */
+function handlePointer(clientX, clientY, touchCount = 1) {
+  if (!gameActive || touchCount > 1) return; // bloque si pinch
+  const { x, y } = getCanvasCoords(clientX, clientY);
+  const tx = Math.floor(x / cellSize);
+  const ty = Math.floor(y / cellSize);
+  if (tx === player.x && ty === player.y) return;
+  attemptMove(tx, ty);
+}
+
+// déplacement au doigt
+canvas.addEventListener("touchmove", e => {
+  if (e.touches.length === 1) {
+    e.preventDefault();
+    handlePointer(e.touches[0].clientX, e.touches[0].clientY, 1);
+  }
+});
+
+// déplacement souris
+canvas.addEventListener("mousemove", e => {
+  if (e.buttons === 1) handlePointer(e.clientX, e.clientY);
+});
+
+// click souris
+canvas.addEventListener("click", e => {
+  handlePointer(e.clientX, e.clientY);
+});
+
+
+/* === CLAVIER === */
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowUp") move(0,-1);
+  if(e.key==="ArrowDown") move(0,1);
+  if(e.key==="ArrowLeft") move(-1,0);
+  if(e.key==="ArrowRight") move(1,0);
+});
+
+/* === BOUTONS === */
+function holdButton(btn,dx,dy){
+  let timeoutId=null, delay=CONFIG.gameplay.initialDelay;
+  function loop(){
+    if(move(dx,dy)){
+      delay=Math.max(CONFIG.gameplay.minDelay, delay-CONFIG.gameplay.accelStep);
+    }
+    timeoutId=setTimeout(loop,delay);
+  }
+  function start(ev){
+    if(!gameActive) return;
+    ev.preventDefault();
+    delay=CONFIG.gameplay.initialDelay;
+    move(dx,dy);
+    timeoutId=setTimeout(loop,delay);
+  }
+  function stop(){ clearTimeout(timeoutId); timeoutId=null; }
+  btn.addEventListener("mousedown",start); btn.addEventListener("touchstart",start);
+  document.addEventListener("mouseup",stop); document.addEventListener("mouseleave",stop); document.addEventListener("touchend",stop);
+}
+holdButton(document.getElementById("btnUp"),0,-1);
+holdButton(document.getElementById("btnDown"),0,1);
+holdButton(document.getElementById("btnLeft"),-1,0);
+holdButton(document.getElementById("btnRight"),1,0);
+
+/* === TIMER === */
+function display_time(seconds, is_result) {
+  seconds = Math.floor(seconds); // on garde des entiers
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+
+  const parts = [];
+  if (is_result) {
+    if (h > 0) parts.push(String(m)+" heure"+(h>1?"s":""))
+    if (m > 0) parts.push(String(m)+" minute"+(m>1?"s":""))
+    parts.push(String(s)+" seconde"+(s>1?"s":""))
+    return parts.join(" ");
+  }
+  else {
+    if (h > 0) parts.push(`${h}`);
+    parts.push(String(m).padStart(2,"0"))
+    parts.push(String(s).padStart(2,"0"))
+    return parts.join(":");
+  }
+}
+
+function startTimer(){
+  startTime=Date.now();
+  timerInterval=setInterval(()=>{
+    elapsed=Math.floor((Date.now()-startTime)/1000);
+    document.getElementById("timer").innerText = display_time(elapsed, false)
+  },1000);
+}
+
+/* === START GAME === */
+async function startGame(){
+  const size = DIFFICULTY[CONFIG.gameplay.difficulty].size
+
+  mazeCols=size.x;
+  mazeRows=size.y;
+  maze = generateMaze(mazeCols,mazeRows,CONFIG);
+  player={...CONFIG.positions.start};
+  goal={ x:size.x-CONFIG.positions.endOffset.x, y:size.y-CONFIG.positions.endOffset.y };
+  path=[{...player}];
+
+  cellSize=48;
+  canvas.width=cellSize*mazeCols;
+  canvas.height=cellSize*mazeRows;
+
+  gameActive=true;
+  await buildMazeLayers(maze, mazeRows, mazeCols, cellSize, 0, 0, CONFIG.theme)
+  await redrawScene();
+  resetZoom();
+  stopAllMusic();
+  playMusic("bgm");
+
+  const modal = bootstrap.Modal.getInstance(document.getElementById('difficultyModal'));
+  if(modal) modal.hide();
+  clearInterval(timerInterval);
+  startTimer();
+}
+
+function winGame() {
+    gameActive=false;
+    clearInterval(timerInterval);
+    
+    stopAllMusic();
+    playSound("win");
+    setTimeout(() => alert(`Bravo, tu as gagné en ${display_time(elapsed, true)} !`), 100);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  preloadAllSkins(() => {
+    document.getElementById("loadingMenu").classList.add( "d-none")
+    buildMenu(SKINS, CONFIG.skin, "skinMenu", (sk)=>{CONFIG.skin = sk})
+    buildMenu(THEMES, CONFIG.theme, "themeMenu", (th)=>{CONFIG.theme = th})
+    buildMenu(DIFFICULTY, CONFIG.gameplay.difficulty, "difficultyMenu", (th)=>{CONFIG.gameplay.difficulty = th})
+    document.getElementById("startButton").disabled = false
+  });
+});
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

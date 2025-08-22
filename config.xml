@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="ovh.chourik.labyrinthe" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>Labyrinthe</name>
+    <description>Labyrinthe App</description>
+    <icon src="www/images/icons/river.png" />
+    <author email="a.helmer@pi2r.net">
+        A. Helmer
+    </author>
+    <content src="index.html" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+</widget>

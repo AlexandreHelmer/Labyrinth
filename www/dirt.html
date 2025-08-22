@@ -1,0 +1,50 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Autotile 16 masques rectangulaires</title>
+<style>
+  body { background:#222; color:#ddd; font-family:sans-serif; }
+  .tile { display:inline-block; margin:8px; text-align:center; }
+  canvas { background:transparent; border:1px solid #555; }
+</style>
+<body>
+<h2>Autotiles 4 bits (0–15), rectangles droits</h2>
+<div id="tiles"></div>
+<script>
+(() => {
+  const TILE = 64;
+  const BROWN = "#8b5a2b";
+  const tilesDiv = document.getElementById("tiles");
+
+  function drawTile(mask) {
+    const c = document.createElement("canvas");
+    c.width = TILE; c.height = TILE;
+    const ctx = c.getContext("2d");
+    ctx.clearRect(0,0,TILE,TILE);
+
+    // zone centrale "chemin"
+    ctx.fillStyle = BROWN;
+    ctx.fillRect(16,16,32,32);
+
+    // extensions rectangulaires selon bits (NESW = 8,4,2,1)
+    if (!(mask & 8)) ctx.fillRect(16, 0, 32, 16);       // haut
+    if (!(mask & 4)) ctx.fillRect(48,16, 16,32);        // droite
+    if (!(mask & 2)) ctx.fillRect(16,48, 32,16);        // bas
+    if (!(mask & 1)) ctx.fillRect(0,16, 16,32);         // gauche
+
+    return c;
+  }
+
+  for (let m=0;m<16;m++){
+    const div = document.createElement("div");
+    div.className = "tile";
+    const canvas = drawTile(m);
+    const label = document.createElement("div");
+    label.textContent = m;
+    div.appendChild(canvas);
+    div.appendChild(label);
+    tilesDiv.appendChild(div);
+  }
+})();
+</script>
+</body>
+</html>
