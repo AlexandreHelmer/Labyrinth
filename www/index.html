@@ -5,15 +5,57 @@
   <title>Jeu de labyrinthe</title>
   <link href="css/bootstrap.min.css" rel="stylesheet" />
   <link href="css/style.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+
 </head>
 <body class="pt-0">
 
-<div class="navbar navbar-dark bg-dark px-2">
-  <span>Le labyrinthe de Dimitri et Nicolas</span>
-  <span id="timer" class="navbar-text me-3">--:--</span>
-  <button class="btn btn-sm btn-outline-info me-2" data-bs-toggle="modal" data-bs-target="#difficultyModal">Nouvelle partie</button>
-  <button id="btnResetZoom" class="btn btn-sm btn-outline-light me-2" onclick="resetZoom()">Reset zoom</button>
-  <button id="btnToggleArrows" class="btn btn-sm btn-outline-light">Flèches</button>
+<!-- Barre d'outils -->
+<div class="bg-dark text-white p-2">
+  <!-- Ligne du haut -->
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <span class="fw-bold">Le labyrinthe de Dimitri et Nicolas</span>
+    <div class="d-flex align-items-center">
+      <span id="timer" class="me-2">--:--</span>
+
+      <!-- Menu 3 points -->
+      <div class="dropdown">
+        <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="dropdown">
+          <i class="fas fa-ellipsis-v"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li>
+            <a class="dropdown-item d-flex align-items-center" href="#" data-bs-toggle="modal" data-bs-target="#difficultyModal">
+              <i class="fas fa-fw fa-gamepad me-2"></i> Nouvelle partie
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item d-flex align-items-center text-danger" href="#" id="btnQuitter">
+              <i class="fas fa-fw fa-sign-out-alt me-2"></i> Quitter
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ligne du bas -->
+  <div class="d-flex justify-content-between">
+    <!-- Gauche -->
+    <button id="btnPauseResume" class="btn btn-sm btn-outline-warning">
+      <i class="fas fa-pause"></i> Pause
+    </button>
+
+    <!-- Droite -->
+    <div>
+      <button id="btnResetZoom" class="btn btn-sm btn-outline-light me-1" onclick="resetZoom()">
+        <i class="fas fa-search-minus"></i>
+      </button>
+      <button id="btnToggleArrows" class="btn btn-sm btn-outline-light">
+        <i class="fas fa-arrows-alt"></i> Flèches
+      </button>
+    </div>
+  </div>
 </div>
 
 <div id="game-container" style="position:relative; overflow:hidden; touch-action:none;">
@@ -22,16 +64,28 @@
   </div>
 
   <!-- Flèches overlay -->
-  <div id="controls" class="d-none" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); text-align:center;">
-    <div>
-      <button id="btnUp" class="btn btn-secondary btn-lg">↑</button>
-    </div>
-    <div>
-      <button id="btnLeft" class="btn btn-secondary btn-lg">←</button>
-      <button id="btnDown" class="btn btn-secondary btn-lg mx-2">↓</button>
-      <button id="btnRight" class="btn btn-secondary btn-lg">→</button>
-    </div>
+<!-- Contrôles directionnels -->
+<div id="controls" class="d-none"
+     style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); text-align:center;">
+
+  <div class="mb-2">
+    <button id="btnUp" class="btn btn-translucent-dark btn-lg rounded-circle shadow">
+      <i class="fas fa-arrow-up"></i>
+    </button>
   </div>
+  <div>
+    <button id="btnLeft" class="btn btn-translucent-dark btn-lg rounded-circle shadow me-2">
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <button id="btnDown" class="btn btn-translucent-dark btn-lg rounded-circle shadow me-2">
+      <i class="fas fa-arrow-down"></i>
+    </button>
+    <button id="btnRight" class="btn btn-translucent-dark btn-lg rounded-circle shadow">
+      <i class="fas fa-arrow-right"></i>
+    </button>
+  </div>
+</div>
+
 </div>
 
 <!-- === MODALE NOUVELLE PARTIE === -->
@@ -43,13 +97,13 @@
         <div id="loadingMenu" class="spinner-border text-light" role="status">
         </div>
       <!-- Choix du skin -->
-      <div class="dropdown mb-3" id="skinMenu"></div>
+      <div class="dropdown mb-3 mx-auto" id="skinMenu"></div>
       
       <!-- Choix du theme -->
-      <div class="dropdown mb-3" id="themeMenu"></div>
+      <div class="dropdown mb-3 mx-auto" id="themeMenu"></div>
 
       <!-- Choix de la difficulté -->
-      <div class="dropdown mb-3" id="difficultyMenu"></div>
+      <div class="dropdown mb-3 mx-auto" id="difficultyMenu"></div>
 
       <button id="startButton" class="btn btn-success" onclick="startGame()" disabled>Démarrer</button>
     </div>
@@ -251,19 +305,65 @@ const SKINS = {
 
 /* === DIFFICULTÉS === */
 const DIFFICULTY = {
-  easy:   { size: {x:11, y:15}, label: "Facile" },
-  medium: { size: {x:17, y:23}, label: "Moyen" },
-  hard:   { size: {x:21, y:29}, label: "Difficile" },
-  impossible : {size: {x:35, y:45}, label: "Impossible"}
+  easy:   {
+    size: {x:11, y:15},
+    label: "Facile",
+    icon: "icons/icon-green-64.png"
+  },
+  medium: {
+    size: {x:17, y:23},
+    label: "Moyen",
+    icon: "icons/icon-yellow-64.png" 
+  },
+  hard:   {
+    size: {x:21, y:29},
+    label: "Difficile",
+    icon: "icons/icon-orange-64.png"
+  },
+  impossible : {
+    size: {x:35, y:45},
+    label: "Impossible",
+    icon: "icons/icon-red-64.png"
+  }
 };
 
 
-// fleches directionnelles 
-document.getElementById("btnToggleArrows").addEventListener("click", () => {
-  document.getElementById("controls").classList.toggle("d-none");
-});
+  // Pause / Resume toggle
+  document.getElementById("btnPauseResume").addEventListener("click", function () {
+    const icon = this.querySelector("i");
+    if (this.dataset.state === "paused") {
+      // Passer en mode "resume"
+      this.dataset.state = "running";
+      icon.classList.replace("fa-play", "fa-pause");
+      this.innerHTML = '<i class="fas fa-pause"></i> Pause';
+    } else {
+      // Passer en mode "pause"
+      this.dataset.state = "paused";
+      icon.classList.replace("fa-pause", "fa-play");
+      this.innerHTML = '<i class="fas fa-play"></i> Reprendre';
+    }
+  });
 
+  // Toggle flèches
+  document.getElementById("btnToggleArrows").addEventListener("click", function () {
+    const icon = this.querySelector("i");
+    if (this.dataset.state === "shown") {
+      this.dataset.state = "hidden";
+      this.innerHTML = '<i class="fas fa-arrows-alt"></i> Afficher';
+    } else {
+      this.dataset.state = "shown";
+      this.innerHTML = '<i class="fas fa-arrows-alt"></i> Cacher';
+    }
+    document.getElementById("controls").classList.toggle("d-none");
+  });
 
+  // Quitter (exemple simple)
+  document.getElementById("btnQuitter").addEventListener("click", function () {
+    if (confirm("Voulez-vous vraiment quitter ?")) {
+      // TODO : logique quitter le jeu
+      console.log("Quitter le jeu");
+    }
+  });
 
 /* Zoom et affichage */
 
@@ -411,7 +511,7 @@ canvas.addEventListener("touchend", e => {
 
 // Initialisation
 //window.addEventListener("resize", () => { updateMinScale(); applyTransform(); });
-window.addEventListener("load", () => resetZoom());
+//window.addEventListener("load", () => resetZoom());
 
 
 

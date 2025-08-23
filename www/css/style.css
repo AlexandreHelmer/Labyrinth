@@ -13,3 +13,49 @@
 #game-container {
     max-height: 80vh
 }
+
+.btn-translucent-dark{
+  background-color: rgba(0,0,0,.45);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.25);
+  backdrop-filter: blur(2px);          /* optionnel, “verre” */
+}
+.btn-translucent-dark:hover{ background-color: rgba(0,0,0,.6); border-color: rgba(255,255,255,.35); }
+.btn-translucent-dark:active,
+.btn-translucent-dark:focus{ background-color: rgba(0,0,0,.7); box-shadow:0 0 0 .2rem rgba(255,255,255,.15); }
+
+
+.dropdown-toggle.custom-dd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;  /* label à gauche, flèche à droite */
+  min-width: 200px;                /* largeur minimale confortable */
+  max-width: 300px;                /* évite le 100% */
+  border: 1px solid rgba(255,255,255,.3);
+  background-color: #222;          /* dark visible */
+}
+
+.dropdown-toggle.custom-dd::after {
+  margin-left: .5rem;              /* espace entre label et caret */
+}
+
+.dropdown-menu.custom-dd {
+  border: 1px solid rgba(255,255,255,.3);
+  min-width: 200px;
+  background-color: #222;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+}
+
+.dropdown-item img {
+  width: 32px; height: 32px;
+  margin-right: .5rem;
+}
+
+.dropdown-item span {
+  flex: 1;                         /* texte occupe la largeur dispo */
+  text-align: left;                /* toujours aligné à gauche */
+}

@@ -21,10 +21,10 @@ function buildMenu(options, currentOption, elementId, cb_select) {
   
   const container = document.getElementById(elementId)
   container.innerHTML = `
-      <button class="btn btn-dark dropdown-toggle" data-bs-toggle="dropdown">
+      <button class="btn btn-dark dropdown-toggle custom-dd" data-bs-toggle="dropdown">
         ${fillOption(currentOption)}
       </button>
-      <ul class="dropdown-menu bg-dark"></ul>`;
+      <ul class="dropdown-menu bg-dark custom-dd"></ul>`;
   
   const menu = container.querySelector(".dropdown-menu");
   for (let key in options) {
@@ -49,7 +49,6 @@ function showModal(modalId) {
   if (el) {
     const modal = new bootstrap.Modal(el);
     modal.show();
-    //console.log(modal)
   }
 }
 

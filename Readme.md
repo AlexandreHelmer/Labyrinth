@@ -9,13 +9,12 @@ Un jeu de labyrinthe simple pour les enfants.
 ```cordova build android```
 
 # TODO, améliorations & idées
-* modale quand on gagne la partie plutôt qu'une alert()
 * musiques de fond en fonction du thème
 * page d'accueil plus agréable... 
 * leaderboard ? Demande un stockage local.
 * Gérer la mise en pause:
   * avec un bouton dédié
   * quand on perd le focus
-* avec un bouton "Quitter"
+
 * images libres de droit
 * localisation ?
