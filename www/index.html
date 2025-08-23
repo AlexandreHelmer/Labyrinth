@@ -226,7 +226,6 @@ function drawPlayerLayer() {
   
     ctx.drawImage(imgGoal,  goal.x*cellSize,  goal.y*cellSize, cellSize, cellSize);
     ctx.drawImage(imgPlayer,   player.x*cellSize,  player.y*cellSize, cellSize, cellSize);
-  
  // })();
 }
 
@@ -374,10 +373,9 @@ const DIFFICULTY = {
     document.getElementById("controls").classList.toggle("d-none");
   });
 
-  // Quitter (exemple simple)
+  // Quitter
   document.getElementById("btnQuitter").addEventListener("click", function () {
     if (confirm("Voulez-vous vraiment quitter ?")) {
-
       quitGame()
     }
   });
@@ -519,7 +517,6 @@ canvas.addEventListener("touchmove", e => {
 
 canvas.addEventListener("touchend", e => {
   if (gestureActive && e.touches.length < 2) {
-    //suppressTapUntil = performance.now() + 350; // évite le "tap" synthétisé
     gestureActive = false;
     pinch = null;
   }
@@ -634,19 +631,13 @@ function showPauseOverlay() {
   pauseOverlay.classList.remove('d-none');
   pauseOverlay.classList.add('d-flex');
   pauseOverlay.style.opacity = 1;
-  requestAnimationFrame(() => {
-//    pauseOverlay.style.opacity = 1;
-  });
 }
 
 // Cacher l'overlay avec fade
 function hidePauseOverlay() {
   pauseOverlay.style.opacity = 0;
-  pauseOverlay.addEventListener('transitionend', function handler() {
-    pauseOverlay.classList.remove('d-flex');
-    pauseOverlay.classList.add('d-none');
-    pauseOverlay.removeEventListener('transitionend', handler);
-  });
+  pauseOverlay.classList.remove('d-flex');
+  pauseOverlay.classList.add('d-none');
 }
 
 
@@ -730,21 +721,12 @@ window.addEventListener('blur', () => {
   pauseGame();
 });
 
-window.addEventListener('focus', () => {
-  resumeGame();
-});
-
 // Gestion pour Cordova
 document.addEventListener('deviceready', () => {
 
   document.addEventListener('pause', () => {
     pauseGame();
   }, false);
-
-  document.addEventListener('resume', () => {
-    resumeGame();
-  }, false);
-
 });
 
 document.addEventListener("DOMContentLoaded", () => {

@@ -1,6 +1,19 @@
-    body { background:#121212; color:#f8f9fa; font-family:'Segoe UI',sans-serif; }
-    canvas { background:#1e1e1e; display:block; margin:auto; border:1px solid #333; border-radius:10px; touch-action:none; }
-    #timer { font-size:1.2rem; }
+body {
+  background:#121212;
+  color:#f8f9fa;
+  font-family:'Segoe UI',sans-serif;
+}
+canvas {
+  background:#1e1e1e;
+  display:block;
+  margin: 0px;
+  border:1px solid #333;
+  border-radius:10px;
+  touch-action:none;
+}
+#timer {
+  font-size:1.2rem;
+}
 #home, #game { height:100vh; display:none; }
 
 #game-container {
@@ -64,3 +77,8 @@
   background: url("../images/tilesets/tile_floor/20.png") repeat center center;
     /* couvre toute la zone */
 }
+
+/*
+canvas, #game-container, #canvas-wrapper {
+    border: 3px solid red
+}*/

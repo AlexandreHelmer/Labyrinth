@@ -19,3 +19,6 @@ Un jeu de labyrinthe simple pour les enfants.
 
 * images libres de droit
 * localisation ?
+
+# Bugs
+* Zoom sur ordi / pas possible
