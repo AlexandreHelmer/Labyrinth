@@ -13,12 +13,8 @@ Un jeu de labyrinthe simple pour les enfants.
 
 * leaderboard ? Demande un stockage local.
 
-* Gérer la mise en pause:
-  * avec un bouton dédié
-  * quand on perd le focus
-
 * images libres de droit
 * localisation ?
 
 # Bugs
-* Zoom sur ordi / pas possible
+* Zoom sur ordi / pas possible avec la molette

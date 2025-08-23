@@ -385,11 +385,11 @@ const DIFFICULTY = {
 const wrapper = document.getElementById("canvas-wrapper");
 const container = document.getElementById("game-container");
 
-
 const MAX_SCALE = 2;
 let scale = 1, minScale = 1;
 let originX = 0, originY = 0;
 
+/* utilitaires */
 function clampScale(s){ return Math.max(minScale, Math.min(MAX_SCALE, s)); }
 
 function getContainerRect(){ return container.getBoundingClientRect(); }
@@ -442,6 +442,14 @@ function setScaleAt(newScale, cx, cy){
   applyTransform();
 }
 
+// déplacement selon dx,dy
+function panBy(dx,dy){
+  originX += dx;
+  originY += dy;
+  clampPan();
+  applyTransform();
+}
+
 function getCanvasCoords(clientX, clientY){
   const r = getContainerRect();
   return {
@@ -460,12 +468,6 @@ function resetZoom(){
   applyTransform();
 }
 
-
-// --- états pour le pinch/pan ---
-let gestureActive = false;
-let suppressTapUntil = 0;
-let pinch = null; // { baseScale, baseDist, prevCenter:{x,y} }
-
 function midPoint(touches){
   return {
     x:(touches[0].clientX + touches[1].clientX)/2,
@@ -477,14 +479,58 @@ function dist2(touches){
   const dy = touches[0].clientY - touches[1].clientY;
   return Math.hypot(dx,dy);
 }
-function panBy(dx,dy){
-  originX += dx;
-  originY += dy;
-  clampPan();
-  applyTransform();
+// Renvoie vrai si (x,y) en px est à moins de R px du joueur
+function isNearPlayer(x, y, R=50) {
+  const playerPx = player.x * cellSize + cellSize / 2;
+  const playerPy = player.y * cellSize + cellSize / 2;
+  const dx = x - playerPx;
+  const dy = y - playerPy;
+  return (dx * dx + dy * dy) <= R * R;
 }
 
-// --- Pinch start/move/end ---
+/* Glisser et zoomer */
+// états pour pinch
+let gestureActive = false;
+let pinch = null; // { baseScale, baseDist, prevCenter:{x,y} }
+// états pan
+let dragMode = null; // "player" ou "board"
+let dragStart = null;
+
+
+function startDrag(clientX, clientY, touchCount = 1) {
+  if (touchCount > 1) return; // multi-touch géré ailleurs
+  const { x, y } = getCanvasCoords(clientX, clientY);
+  dragStart = { x:clientX, y:clientY };
+  dragMode = isNearPlayer(x, y) ? "player" : "board";
+}
+
+function moveDrag(clientX, clientY, touchCount = 1) {
+  if (touchCount > 1 || !dragMode) return;
+  const { x, y } = getCanvasCoords(clientX, clientY);
+  
+  if (dragMode === "player") {
+    // déplacer le joueur vers la case correspondante
+    const tx = Math.floor(x / cellSize);
+    const ty = Math.floor(y / cellSize);
+    attemptMove(tx, ty);
+  }
+  else if (dragMode === "board") {
+    // décalage du plateau
+    const dx = clientX - dragStart.x;
+    const dy = clientY - dragStart.y;
+    panBy(dx, dy);
+    dragStart = { x:clientX, y:clientY }; // mise à jour pour drag continu
+  }
+}
+
+function endDrag() {
+  dragMode = null;
+  dragStart = null;
+}
+
+/* Events */
+
+// Touch
 canvas.addEventListener("touchstart", e => {
   if (e.touches.length === 2) {
     gestureActive = true;
@@ -494,7 +540,10 @@ canvas.addEventListener("touchstart", e => {
       prevCenter: midPoint(e.touches)
     };
   }
-}, { passive:false });
+  if (e.touches.length === 1) {
+    startDrag(e.touches[0].clientX, e.touches[0].clientY, 1);
+  }
+}, { passive: false });
 
 canvas.addEventListener("touchmove", e => {
   if (e.touches.length === 2 && pinch) {
@@ -503,54 +552,38 @@ canvas.addEventListener("touchmove", e => {
     const k = dist2(e.touches) / pinch.baseDist;
     const target = clampScale(pinch.baseScale * k);
 
-    // 1) Zoom autour du centre courant
-    setScaleAt(target, c.x, c.y);
-
-    // 2) Puis pan par le déplacement du centre du pinch
-    const dx = c.x - pinch.prevCenter.x;
-    const dy = c.y - pinch.prevCenter.y;
-    panBy(dx, dy);
-
-    pinch.prevCenter = c;
+    setScaleAt(target, c.x, c.y)
   }
-}, { passive:false });
+  if (e.touches.length === 1) {
+    e.preventDefault();
+    moveDrag(e.touches[0].clientX, e.touches[0].clientY, 1);
+  }
+}, { passive: false });
 
 canvas.addEventListener("touchend", e => {
   if (gestureActive && e.touches.length < 2) {
     gestureActive = false;
     pinch = null;
   }
-}, { passive:false });
+  if (e.touches.length < 1) endDrag();
+}, { passive: false });
 
-
-/* === GLISSER === */
-function handlePointer(clientX, clientY, touchCount = 1) {
-  if (!gameActive || touchCount > 1) return; // bloque si pinch
-  const { x, y } = getCanvasCoords(clientX, clientY);
-  const tx = Math.floor(x / cellSize);
-  const ty = Math.floor(y / cellSize);
-  if (tx === player.x && ty === player.y) return;
-  attemptMove(tx, ty);
-}
-
-// déplacement au doigt
-canvas.addEventListener("touchmove", e => {
-  if (e.touches.length === 1) {
-    e.preventDefault();
-    handlePointer(e.touches[0].clientX, e.touches[0].clientY, 1);
-  }
+// Souris
+canvas.addEventListener("mousedown", e => {
+  if (e.button === 0) startDrag(e.clientX, e.clientY);
 });
 
-// déplacement souris
 canvas.addEventListener("mousemove", e => {
-  if (e.buttons === 1) handlePointer(e.clientX, e.clientY);
+  if (e.buttons === 1) moveDrag(e.clientX, e.clientY);
 });
 
-// click souris
+canvas.addEventListener("mouseup", e => {
+  if (e.button === 0) endDrag();
+});
+/*
 canvas.addEventListener("click", e => {
   handlePointer(e.clientX, e.clientY);
-});
-
+});*/
 
 /* === CLAVIER === */
 document.addEventListener("keydown",e=>{
