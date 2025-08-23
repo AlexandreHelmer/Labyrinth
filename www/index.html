@@ -106,6 +106,15 @@
   </div>
 </div>
 
+<!-- Overlay de pause -->
+  <div id="pauseOverlay" class="d-none justify-content-center align-items-center text-white"
+       style="position:absolute; inset:0; background: rgba(0,0,0,0.6); font-size:2rem; z-index:10; transition: opacity 0.3s;">
+    <div class="text-center">
+      <i class="fas fa-pause-circle fa-3x mb-3"></i>
+      <div>Jeu en pause</div>
+    </div>
+  </div>
+</div>
 </div>
 
 </div>
@@ -153,6 +162,7 @@
 
 
 <script src="js/bootstrap_utils.js"></script>
+<script src="js/timer.js"></script>
 <script src="js/sounds.js"></script>
 <script src="js/images.js"></script>
 <script src="js/maze_generator.js"></script>
@@ -186,9 +196,9 @@ let ctx=canvas.getContext("2d");
 let mazeCols, mazeRows, cellSize;
 let maze, player, goal;
 let path=[];
-let timerInterval, startTime;
 
 let gameActive=false;
+let isPaused = false;
 
 let mazeLayer=null;
 let elapsed=0;
@@ -226,7 +236,7 @@ function redrawScene(){
 
 /* === DEPLACEMENT === */
 function move(dx,dy){
-  if(!gameActive) return false;
+  if(!gameActive || isPaused) return false;
   const nx=player.x+dx, ny=player.y+dy;
   if(nx>=0&&ny>=0&&nx<mazeCols&&ny<mazeRows&&maze[ny][nx]===0){
     player.x=nx;
@@ -350,21 +360,6 @@ const DIFFICULTY = {
 };
 
 
-  // Pause / Resume toggle
-  document.getElementById("btnPauseResume").addEventListener("click", function () {
-    const icon = this.querySelector("i");
-    if (this.dataset.state === "paused") {
-      // Passer en mode "resume"
-      this.dataset.state = "running";
-      icon.classList.replace("fa-play", "fa-pause");
-      this.innerHTML = '<i class="fas fa-pause"></i> Pause';
-    } else {
-      // Passer en mode "pause"
-      this.dataset.state = "paused";
-      icon.classList.replace("fa-pause", "fa-play");
-      this.innerHTML = '<i class="fas fa-play"></i> Reprendre';
-    }
-  });
 
   // Toggle flèches
   document.getElementById("btnToggleArrows").addEventListener("click", function () {
@@ -617,13 +612,43 @@ function display_time(seconds, is_result) {
   }
 }
 
-function startTimer(){
-  startTime=Date.now();
-  timerInterval=setInterval(()=>{
-    elapsed=Math.floor((Date.now()-startTime)/1000);
-    document.getElementById("timer").innerText = display_time(elapsed, false)
-  },1000);
+  // Pause / Resume toggle
+const pauseBtn = document.getElementById("btnPauseResume")
+pauseBtn.addEventListener("click", function () {
+    if (isPaused) {
+      resumeGame()
+    } else {
+      pauseGame()
+    }
+  });
+
+
+const gameTimer = new GameTimer((seconds) => {
+  document.getElementById("timer").innerText = display_time(seconds, false);
+});
+
+const pauseOverlay = document.getElementById('pauseOverlay');
+
+// Afficher l'overlay avec fade
+function showPauseOverlay() {
+  pauseOverlay.classList.remove('d-none');
+  pauseOverlay.classList.add('d-flex');
+  pauseOverlay.style.opacity = 1;
+  requestAnimationFrame(() => {
+//    pauseOverlay.style.opacity = 1;
+  });
 }
+
+// Cacher l'overlay avec fade
+function hidePauseOverlay() {
+  pauseOverlay.style.opacity = 0;
+  pauseOverlay.addEventListener('transitionend', function handler() {
+    pauseOverlay.classList.remove('d-flex');
+    pauseOverlay.classList.add('d-none');
+    pauseOverlay.removeEventListener('transitionend', handler);
+  });
+}
+
 
 /* === START GAME === */
 async function startGame(){
@@ -641,6 +666,8 @@ async function startGame(){
   canvas.height=cellSize*mazeRows;
 
   gameActive=true;
+  isPaused = false;
+  
   await buildMazeLayers(maze, mazeRows, mazeCols, cellSize, 0, 0, CONFIG.theme)
   await redrawScene();
   
@@ -649,29 +676,29 @@ async function startGame(){
   
   document.getElementById("timer").innerText = "--:--"
   hideModals()
+  hidePauseOverlay()
   document.getElementById("homeTab").classList.replace('d-flex','d-none')
   document.getElementById("gameTab").classList.replace('d-none','d-flex')
   resetZoom();
   
-  clearInterval(timerInterval);
-  startTimer();
+  gameTimer.reset();
+  gameTimer.start();
 }
 
 function winGame() {
     gameActive=false;
-    clearInterval(timerInterval);
+    gameTimer.pause()
     
     stopAllMusic();
     playSound("win")
     
     document.querySelector("#victoryModal #victoryMessage")
-      .innerHTML=`Tu as gagné en ${display_time(elapsed, true)} !`
+      .innerHTML=`Tu as gagné en ${display_time(gameTimer.elapsedBeforePause, true)} !`
     setTimeout(()=>showModal("victoryModal"),100)
 }
 
 function quitGame() {
   gameActive=false;
-  clearInterval(timerInterval);
     
   stopAllMusic();
     
@@ -679,6 +706,47 @@ function quitGame() {
   document.getElementById("homeTab").classList.replace('d-none','d-flex')
   
 }
+
+function pauseGame() {
+  if (!isPaused && gameActive) {
+    isPaused = true;
+    gameTimer.pause();
+    showPauseOverlay();
+    pauseBtn.innerHTML = '<i class="fas fa-play"></i> Reprendre';
+  }
+}
+
+function resumeGame() {
+  if (isPaused) {
+    isPaused = false;
+    gameTimer.start();
+    hidePauseOverlay();
+    pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+  }
+}
+
+// Gestion pour navigateur classique
+window.addEventListener('blur', () => {
+  pauseGame();
+});
+
+window.addEventListener('focus', () => {
+  resumeGame();
+});
+
+// Gestion pour Cordova
+document.addEventListener('deviceready', () => {
+
+  document.addEventListener('pause', () => {
+    pauseGame();
+  }, false);
+
+  document.addEventListener('resume', () => {
+    resumeGame();
+  }, false);
+
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   preloadAllSkins(() => {
     document.getElementById("loadingMenu").classList.add( "d-none")
