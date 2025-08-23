@@ -10,8 +10,9 @@ Un jeu de labyrinthe simple pour les enfants.
 
 # TODO, améliorations & idées
 * musiques de fond en fonction du thème
-* page d'accueil plus agréable... 
+
 * leaderboard ? Demande un stockage local.
+
 * Gérer la mise en pause:
   * avec un bouton dédié
   * quand on perd le focus

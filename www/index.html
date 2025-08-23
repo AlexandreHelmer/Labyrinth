@@ -9,6 +9,27 @@
 </head>
 <body class="pt-0">
 
+<!-- Écran d’accueil -->
+<div id="homeTab" class="d-flex flex-column justify-content-center align-items-center text-center vh-100 bg-dark text-light">
+  <h1 class="mb-5 p-4 btn-translucent-dark">Bienvenue dans le labyrinthe</h1>
+  
+  <div class="d-grid gap-3 col-9 col-md-4">
+    <button id="startBtn" class="btn btn-translucent-dark btn-lg" onclick="showModal('difficultyModal')">
+      <i class="fas fa-play"></i> Nouvelle partie
+    </button>
+    <!--<button class="btn btn-translucent-dark btn-lg">
+      <i class="fas fa-cog"></i> Paramètres
+    </button>
+    <button class="btn btn-translucent-dark btn-lg">
+      <i class="fas fa-info-circle"></i> Crédits
+    </button>-->
+  </div>
+</div>
+
+
+<!-- Écran de jeu -->
+<div id="gameTab" class="d-none flex-column">
+  
 <!-- Barre d'outils -->
 <div class="bg-dark text-white p-2">
   <!-- Ligne du haut -->
@@ -87,9 +108,11 @@
 
 </div>
 
+</div>
+
 <!-- === MODALE NOUVELLE PARTIE === -->
 <div class="modal fade" id="difficultyModal" tabindex="-1">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content p-3 text-center bg-dark text-light">
       <h5 class="mb-3">Nouvelle partie</h5>
 
@@ -111,7 +134,7 @@
 
 <!-- === MODALE FIN DE JEU === -->
 <div class="modal fade" id="victoryModal" tabindex="-1">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content p-3 bg-dark text-light">
       <div class="modal-header">
         <h5 class="modal-title">
@@ -359,8 +382,8 @@ const DIFFICULTY = {
   // Quitter (exemple simple)
   document.getElementById("btnQuitter").addEventListener("click", function () {
     if (confirm("Voulez-vous vraiment quitter ?")) {
-      // TODO : logique quitter le jeu
-      console.log("Quitter le jeu");
+
+      quitGame()
     }
   });
 
@@ -620,11 +643,16 @@ async function startGame(){
   gameActive=true;
   await buildMazeLayers(maze, mazeRows, mazeCols, cellSize, 0, 0, CONFIG.theme)
   await redrawScene();
-  resetZoom();
+  
   stopAllMusic();
   playMusic("bgm");
   
+  document.getElementById("timer").innerText = "--:--"
   hideModals()
+  document.getElementById("homeTab").classList.replace('d-flex','d-none')
+  document.getElementById("gameTab").classList.replace('d-none','d-flex')
+  resetZoom();
+  
   clearInterval(timerInterval);
   startTimer();
 }
@@ -641,6 +669,16 @@ function winGame() {
     setTimeout(()=>showModal("victoryModal"),100)
 }
 
+function quitGame() {
+  gameActive=false;
+  clearInterval(timerInterval);
+    
+  stopAllMusic();
+    
+  document.getElementById("gameTab").classList.replace('d-flex','d-none')
+  document.getElementById("homeTab").classList.replace('d-none','d-flex')
+  
+}
 document.addEventListener("DOMContentLoaded", () => {
   preloadAllSkins(() => {
     document.getElementById("loadingMenu").classList.add( "d-none")
