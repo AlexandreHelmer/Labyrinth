@@ -78,7 +78,7 @@ const THEMES = {
      layers: [
     { z: -2, tileset: ["tilesets/tile_floor/20.png","tilesets/tile_floor/25.png","tilesets/tile_floor/40.png"]},
    // { z: -1, mode: "road", tileset: "tilesets/basic_road/", filter: 0},
-    { z: -1, mode: "road", tileset: "tilesets/brick_wall/", filter: 1},
+    { z: -1, mode: "road", tileset: "tilesets/brick_wall2/", filter: 1},
     { z: +1, tileset: ["tilesets/misc_city/jardiniere_v_1.png","tilesets/misc_city/bush.png","tilesets/misc_city/flowers.png","tilesets/misc_city/clock_1.png","tilesets/misc_city/pool_1.png","tilesets/misc_city/pool_2.png","tree.png", "tree2.png", "tree3.png", "tree4.png"], filter: 2 }
   ]},
   
