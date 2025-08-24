@@ -6,7 +6,6 @@
     <author email="a.helmer@pi2r.net">
         A. Helmer
     </author>
-    <preference name="KeepRunning" value="true"/>
     <content src="index.html" />
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
