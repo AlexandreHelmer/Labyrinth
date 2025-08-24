@@ -480,12 +480,12 @@ function dist2(touches){
   return Math.hypot(dx,dy);
 }
 // Renvoie vrai si (x,y) en px est à moins de R px du joueur
-function isNearPlayer(x, y, R=50) {
+function isNearPlayer(x, y, R=100) {
   const playerPx = player.x * cellSize + cellSize / 2;
   const playerPy = player.y * cellSize + cellSize / 2;
   const dx = x - playerPx;
   const dy = y - playerPy;
-  return (dx * dx + dy * dy) <= R * R;
+  return (dx * dx + dy * dy) <= R * R / (scale*scale);
 }
 
 /* Glisser et zoomer */
