@@ -756,8 +756,9 @@ window.addEventListener('blur', () => {
 
 // Gestion pour Cordova
 document.addEventListener('deviceready', () => {
-
+  alert("loaded")
   document.addEventListener('pause', () => {
+    alert("pause")
     pauseGame();
   }, false);
 });
