@@ -20,3 +20,5 @@ Un jeu de labyrinthe simple pour les enfants.
 * Zoom sur ordi / pas possible avec la molette
 * sur Android, la perte de focus ne met pas la pause
 * sur android, le theme plage ne marche pas
+* ne pas planter si une image est manquante... ?
+* 

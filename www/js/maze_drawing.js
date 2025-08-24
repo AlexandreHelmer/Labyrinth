@@ -112,7 +112,7 @@ const THEMES = {
    //   { z: -1, tileset: ["flower.png"], filter:0},
       { z: -1, mode: "road", tileset: "tilesets/river/", filter: 1},
      // { z: +2, tileset: ["tree.png", "tree2.png", "tree3.png", "tree4.png"], filter: 1 },
-      { z: +1, tileset: ["tree2.png"], filter: 2 }
+      { z: +1, tileset: ["tilesets/rock1.png"], filter: 2 }
   ]}
 };
 
