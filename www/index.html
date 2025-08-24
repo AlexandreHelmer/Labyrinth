@@ -160,7 +160,7 @@
   </div>
 </div>
 
-
+<script src="cordova.js"></script>
 <script src="js/bootstrap_utils.js"></script>
 <script src="js/timer.js"></script>
 <script src="js/sounds.js"></script>
@@ -758,7 +758,7 @@ window.addEventListener('blur', () => {
 document.addEventListener('deviceready', () => {
   alert("loaded")
   document.addEventListener('pause', () => {
-    alert("pause")
+    alert("")
     pauseGame();
   }, false);
 });
