@@ -396,7 +396,15 @@ const wrapper = document.getElementById("canvas-wrapper");
 const container = document.getElementById("game-container");
 
 const gameBoard = new GameBoard(canvas, container, wrapper, 
- (x,y)=> isNearPlayer(x,y)?"player":"board",
+   (x,y)=> {
+     let isPlayer = isNearPlayer(x,y)
+     if (isPlayer) {
+       const playerPx = player.x * cellSize + cellSize / 2;
+       const playerPy = player.y * cellSize + cellSize / 2;
+       return {name:"Player",x:playerPx, y:playerPy}
+     }
+     return null
+   },
  (name, x, y) => {
     attemptMove(Math.floor(x / cellSize), Math.floor(y / cellSize));
   }
@@ -574,7 +582,6 @@ window.addEventListener('blur', () => {
 
 // Gestion pour Cordova
 document.addEventListener('deviceready', () => {
-
   document.addEventListener('pause', () => {
     pauseGame();
   }, false);

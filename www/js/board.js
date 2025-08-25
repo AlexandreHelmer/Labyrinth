@@ -13,6 +13,8 @@ class GameBoard {
     // états gestes
     this.gestureActive = false;
     this.pinch = null;
+    
+    this.dragActive = false;
     this.dragObject = null; // "player" ou "board"
     this.dragStart = null;
     
@@ -120,26 +122,38 @@ class GameBoard {
   
   startDrag(clientX, clientY, touchCount = 1) {
     if (touchCount > 1) return;
+    this.dragActive = true;
     const { x, y } = this.getCanvasCoords(clientX, clientY);
     this.dragStart = { x: clientX, y: clientY };
     this.dragObject = this.getObjectAt(x, y)
   }
   
   moveDrag(clientX, clientY, touchCount = 1) {
-    if (touchCount > 1 || !this.dragObject) return;
-    const { x, y } = this.getCanvasCoords(clientX, clientY);
+    if (touchCount > 1 || !this.dragActive) return;
     
-    if (this.dragObject === "board") {
+    if (!this.dragObject) {
       const dx = clientX - this.dragStart.x;
       const dy = clientY - this.dragStart.y;
+
       this.panBy(dx, dy);
       this.dragStart = { x: clientX, y: clientY };
     }
-    else
-      this.attemptMoveBoardObject(this.dragObject, x, y)
+    else {
+      // offsetX = startX - objX
+      // newX = newPosX + offsetX
+      const startPos = this.getCanvasCoords(this.dragStart.x, this.dragStart.y)
+      const newPos = this.getCanvasCoords(clientX, clientY);
+      const offX = startPos.x - this.dragObject.x
+      const offY = startPos.y - this.dragObject.y
+      
+      console.log(newPos.x, offX)
+
+      this.attemptMoveBoardObject(this.dragObject.name, newPos.x-offX, newPos.y-offY)
+    }
   }
   
   endDrag() {
+    this.dragActive = false;
     this.dragObject = null;
     this.dragStart = null;
   }
