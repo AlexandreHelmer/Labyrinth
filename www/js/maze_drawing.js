@@ -104,7 +104,7 @@ const THEMES = {
     //  { z: +1, tileset: ["tree2.png"], filter: 2 }
   ]},
   
-  river_fish: {
+  beach: {
     label: "Plage",
     icon: "icons/beach.png",
     layers: [
