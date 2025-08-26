@@ -34,7 +34,7 @@
 <div class="bg-dark text-white p-2">
   <!-- Ligne du haut -->
   <div class="d-flex justify-content-between align-items-center mb-1">
-    <span class="fw-bold">Le labyrinthe de Dimitri et Nicolas</span>
+    <span class="fw-bold">Le Tangram de Dimitri et Nicolas</span>
     <div class="d-flex align-items-center">
       <span id="timer" class="me-2">--:--</span>
 
@@ -71,14 +71,14 @@
       <button id="btnResetZoom" class="btn btn-sm btn-outline-light me-1" onclick="resetZoom()">
         <i class="fas fa-search-minus"></i>
       </button>
-      <button id="btnToggleArrows" class="btn btn-sm btn-outline-light">
-        <i class="fas fa-arrows-alt"></i> Flèches
-      </button>
+        <button onclick="exportFigure()" class="btn btn-dark btn-lg">
+          <i class="fas fa-download"></i>
+        </button>
     </div>
   </div>
 </div>
 
-<div id="game-container" style="position:relative; overflow:hidden; touch-action:none;">
+<div id="game-container" style="position:relative; overflow:hidden; touch-action:none; background: url('images/tilesets/tile_floor/20.png') repeat center center;">
   <div id="canvas-wrapper" style="transform-origin: 0 0;">
     <canvas id="mazeCanvas"></canvas>
   </div>
@@ -87,23 +87,21 @@
 <!-- Contrôles directionnels -->
 <div id="controls" class="d-none"
      style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); text-align:center;">
+<div>
+  <button onclick="rotateLeft()" class="btn btn-translucent-dark btn-lg me-2">
+    <i class="fas fa-undo"></i>
+  </button>
+  <button onclick="rotateRight()" class="btn btn-translucent-dark btn-lg me-2">
+    <i class="fas fa-redo"></i>
+  </button>
+  <button onclick="mirrorH()" class="btn btn-translucent-dark btn-lg me-2">
+    <i class="fas fa-arrows-alt-h"></i>
+  </button>
+  <button onclick="mirrorV()" class="btn btn-translucent-dark btn-lg">
+    <i class="fas fa-arrows-alt-v"></i>
+  </button>
 
-  <div class="mb-2">
-    <button id="btnUp" class="btn btn-translucent-dark btn-lg rounded-circle shadow">
-      <i class="fas fa-arrow-up"></i>
-    </button>
-  </div>
-  <div>
-    <button id="btnLeft" class="btn btn-translucent-dark btn-lg rounded-circle shadow me-2">
-      <i class="fas fa-arrow-left"></i>
-    </button>
-    <button id="btnDown" class="btn btn-translucent-dark btn-lg rounded-circle shadow me-2">
-      <i class="fas fa-arrow-down"></i>
-    </button>
-    <button id="btnRight" class="btn btn-translucent-dark btn-lg rounded-circle shadow">
-      <i class="fas fa-arrow-right"></i>
-    </button>
-  </div>
+</div>
 </div>
 
 <!-- Overlay de pause -->
@@ -170,19 +168,9 @@
 <script>
 /* === CONFIGURATION === */
 const CONFIG = {
-  canvas: { maxSize: 100 },
   gameplay: {
-    initialDelay: 120,
-    minDelay: 40,
-    accelStep: 10,
-    tolerance: 5,
     difficulty: "easy"
   },
-  positions: {
-    start: { x: 0, y: 1 },
-    endOffset: { x: 1, y: 2 }
-  },
-  path: { color: "rgba(255,45,45,0.7)", width: 5 },
   skin: "cat",
   theme: "classic"
 };
@@ -218,7 +206,6 @@ const SKINS = {
 /* === DIFFICULTÉS === */
 const DIFFICULTY = {
   easy:   {
-    size: {x:11, y:15},
     label: "Facile",
     icon: "icons/icon-green-64.png"
   },
@@ -226,9 +213,6 @@ const DIFFICULTY = {
 };
 
 // UI functions
-
-  // Toggle flèches
-  
 
   // Quitter
   document.getElementById("btnQuitter").addEventListener("click", function () {
@@ -247,18 +231,91 @@ pauseBtn.addEventListener("click", function () {
     }
   });
 
+// Toggle controls
+function showControls() {
+  document.getElementById("controls").classList.replace("d-none", "d-flex");
+}
+function hideControls() {
+  document.getElementById("controls").classList.replace("d-flex", "d-none");
+}
+  
 /* Zoom et affichage */
 
 const wrapper = document.getElementById("canvas-wrapper");
 const container = document.getElementById("game-container");
 
-const gameBoard = new GameBoard(canvas, container, wrapper, 
- (x,y)=> Tangram.getObjectAt(x, y),
- (name, x, y) => {
-    if(!gameActive || isPaused) return false;
-    Tangram.move(name,x,y)
-    Tangram.redrawScene()
+
+
+function rotateLeft() {
+  const obj = Tangram.getSelectedObject();
+  if (obj) {
+    Tangram.rotate(obj.name, -Math.PI/8); // sens antihoraire
+    updateScene()
   }
+}
+
+function rotateRight() {
+  const obj = Tangram.getSelectedObject();
+  if (obj) {
+    Tangram.rotate(obj.name, Math.PI/8); // sens horaire
+    updateScene()
+  }
+}
+
+function mirrorH() {
+  const obj = Tangram.getSelectedObject();
+  if (obj) {
+    Tangram.mirrorH(obj.name);
+    updateScene()
+  }
+}
+
+function mirrorV() {
+  const obj = Tangram.getSelectedObject();
+  if (obj) {
+    Tangram.mirrorV(obj.name);
+    updateScene()
+  }
+}
+
+function exportFigure() {
+  console.log(JSON.stringify(Tangram.exportFigure()))
+}
+function moveObject(name, x, y) {
+  if(!gameActive || isPaused) return false;
+  Tangram.move(name,x,y)
+  Tangram.selectObjectAt(x,y)
+  showControls()
+  updateScene()
+}
+
+function clickBoard(x,y) {
+  Tangram.selectObjectAt(x,y)
+  updateScene()
+  if (Tangram.getSelectedObject())
+    showControls()
+  else
+    hideControls()
+}
+
+function updateScene() {
+  Tangram.redrawScene()
+  checkMatch()
+}
+
+function checkMatch() {
+  result = Tangram.matchCurrentFigureWith("flower")
+  if (result.match) {
+    canvas.style.border="2px solid green"
+  }
+  else {
+    canvas.style.border="2px solid red"
+  }
+}
+const gameBoard = new GameBoard(canvas, container, wrapper, 
+ Tangram.getObjectAt,
+ moveObject,
+ clickBoard
 );
 gameBoard.MAX_SCALE = 1
 
@@ -315,7 +372,7 @@ function hidePauseOverlay() {
 async function startGame(){
   const size = DIFFICULTY[CONFIG.gameplay.difficulty].size
 
-  canvas.width= 700;
+  canvas.width= 1000;
   canvas.height= 1000;
   Tangram.initTangram(canvas);
 
@@ -379,6 +436,9 @@ function resumeGame() {
   }
 }
 
+function resetZoom() {
+  gameBoard.resetZoom()
+}
 // Gestion pour navigateur classique
 window.addEventListener('blur', () => {
   pauseGame();

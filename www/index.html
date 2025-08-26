@@ -407,7 +407,8 @@ const gameBoard = new GameBoard(canvas, container, wrapper,
    },
  (name, x, y) => {
     attemptMove(Math.floor(x / cellSize), Math.floor(y / cellSize));
-  }
+ },
+ (x,y)=>{}
 );
 
 // Renvoie vrai si (x,y) en px est à moins de R px du joueur

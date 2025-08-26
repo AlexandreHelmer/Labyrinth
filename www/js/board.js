@@ -1,5 +1,5 @@
 class GameBoard {
-  constructor(canvas, container, wrapper, getObjectAt, attemptMoveBoardObject) {
+  constructor(canvas, container, wrapper, getObjectAt, attemptMoveBoardObject, clickBoard) {
     this.canvas = canvas;
     this.container = container;
     this.wrapper = wrapper;
@@ -22,6 +22,7 @@ class GameBoard {
     this.updateMinScale();
     this.getObjectAt = getObjectAt
     this.attemptMoveBoardObject = attemptMoveBoardObject
+    this.clickBoard = clickBoard
   }
   
   /* === Utilitaires internes === */
@@ -146,8 +147,6 @@ class GameBoard {
       const offX = startPos.x - this.dragObject.x
       const offY = startPos.y - this.dragObject.y
       
-      console.log(newPos.x, offX)
-
       this.attemptMoveBoardObject(this.dragObject.name, newPos.x-offX, newPos.y-offY)
     }
   }
@@ -207,5 +206,11 @@ class GameBoard {
     this.canvas.addEventListener("mouseup", e => {
       if (e.button === 0) this.endDrag();
     });
+    
+    this.canvas.addEventListener("click", e => {
+      const pos = this.getCanvasCoords(e.clientX, e.clientY);
+      this.clickBoard(pos.x,pos.y)
+    });
+    
   }
 }
