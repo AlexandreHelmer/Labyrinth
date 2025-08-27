@@ -13,6 +13,7 @@ const FIGURES={
   },
   flower: {
     label: "Fleur",
+    icon: "icons/miniature-flower.png",
     pieces: [{"name":"bigA","x":603.1983241894131,"y":697.6427703606753,"rot":3.9269908169872414,"scaleX":1,"scaleY":1},{"name":"bigB","x":426.4216288927763,"y":697.6427703606753,"rot":-0.7853981633974483,"scaleX":1,"scaleY":1},{"name":"mid","x":578.0350830217222,"y":421.7544227123568,"rot":0.7853981633974483,"scaleX":-1,"scaleY":-1},{"name":"smallA","x":327.67252978140846,"y":358.4400470595076,"rot":0,"scaleX":-1,"scaleY":1},{"name":"smallB","x":639.4126290499587,"y":297.16638277414773,"rot":4.71238898038469,"scaleX":1,"scaleY":1},{"name":"square","x":514.8485100132776,"y":233.16719637431248,"rot":0.7853981633974483,"scaleX":1,"scaleY":1},{"name":"para","x":452.67252978140846,"y":421.7544227123568,"rot":4.71238898038469,"scaleX":-1,"scaleY":1}]
   },
   shirt: {
@@ -22,6 +23,10 @@ const FIGURES={
   fir: {
     label: "Sapin",
     pieces: [{"name":"bigA","x":486.96278199058713,"y":733.1798964497282,"rot":0.7853981633974483,"scaleX":1,"scaleY":1},{"name":"bigB","x":505.71236766668983,"y":348.90953241006156,"rot":4.71238898038469,"scaleX":1,"scaleY":1},{"name":"mid","x":502.37050496324235,"y":133.6815355828985,"rot":-1.5707963267948966,"scaleX":-1,"scaleY":1},{"name":"smallA","x":619.5453034630647,"y":601.7500434766415,"rot":-0.7853981633974483,"scaleX":-1,"scaleY":-1},{"name":"smallB","x":619.5453034630648,"y":778.586098609851,"rot":7.068583470577037,"scaleX":-1,"scaleY":1},{"name":"square","x":486.9627819905872,"y":908.7135730059487,"rot":1.5707963267948966,"scaleX":1,"scaleY":1},{"name":"para","x":398.5616660415809,"y":556.7041365786268,"rot":2.356194490192345,"scaleX":-1,"scaleY":-1}]
+  },
+  heart: {
+    label: "Coeur",
+    pieces: [{"name":"bigA","x":609.1518412751135,"y":551.1664749331123,"rot":4.71238898038469,"scaleX":1,"scaleY":-1},{"name":"bigB","x":355.71230550125637,"y":299.83520679622455,"rot":4.71238898038469,"scaleX":1,"scaleY":1},{"name":"mid","x":297.38650487849185,"y":488.0008408646685,"rot":-2.356194490192345,"scaleX":-1,"scaleY":1},{"name":"smallA","x":422.3229481615893,"y":551.0258635445948,"rot":-3.141592653589793,"scaleX":-1,"scaleY":1},{"name":"smallB","x":605.7838504462874,"y":239.63319778083547,"rot":4.71238898038469,"scaleX":-1,"scaleY":1},{"name":"square","x":484.8206495919233,"y":676.2032786936892,"rot":2.356194490192345,"scaleX":1,"scaleY":1},{"name":"para","x":670.2092077065881,"y":364.33210900155626,"rot":0,"scaleX":1,"scaleY":1}]
   }
 }
 
@@ -55,9 +60,9 @@ function initTangram(canvasOrCtx, width, height) {
   /*
   
   TODO:
-  - palette custom
-  - afficher petite image "cible"
-  - choix de la cible dans l'interface 
+  - palette et themes custom, choisi au début
+  - petite image cible téléchargeable 
+  - separer du labyrinthe 
   */
   
   // Palette vive
@@ -104,7 +109,7 @@ function initTangram(canvasOrCtx, width, height) {
   add("square", square(S*sq2/4), cx, cy+S/4, Math.PI/4, colors[5]);
   add("para", parallelogram(S/2,S/4), cx+3/8*S, cy-S/8, Math.PI/2, colors[6]);
   */
-  importFigure(FIGURES["shirt"].pieces)
+  importFigure(FIGURES["square"].pieces)
 //  redrawScene();
   
 }
@@ -207,7 +212,7 @@ function initTangram(canvasOrCtx, width, height) {
   }
   
   function matchCurrentFigureWith(figname, tol=0.05) {
-    return compareFigures(makePiecesArray(FIGURES[figname].pieces), makePiecesArray(exportFigure()), tol)
+    return compareFigures(makePiecesArray(FIGURES[figname].pieces), pieces, 128, tol)
   }
 
   function getSelectedObject() {
@@ -218,7 +223,7 @@ function initTangram(canvasOrCtx, width, height) {
   function redrawScene() {
     ctx.clearRect(0,0,WIDTH,HEIGHT);
 
-    ctx.fillStyle = "black";
+    ctx.fillStyle = "#333";
     ctx.fillRect(0,0,WIDTH,HEIGHT);
 
     for (const name of drawOrder) {
@@ -386,8 +391,8 @@ function projectPointOnSegment(p, a, b) {
   return {x: a.x + t*vx, y: a.y + t*vy};
 }
 
-
 function renderFigureToImage(fig, size=128, margin=10, useColors=false) {
+
   const cvs = document.createElement("canvas");
   cvs.width = size;
   cvs.height = size;
@@ -407,10 +412,10 @@ function renderFigureToImage(fig, size=128, margin=10, useColors=false) {
   const scale = (size - 2*margin) / Math.max(w,h);
 
   // dessiner en noir
-  ctx.fillStyle = "white"
+  ctx.fillStyle = "black"
   ctx.fillRect(0,0,size,size)
-  ctx.fillStyle = "black";
-  ctx.strokeStyle = "black";
+  ctx.fillStyle = "white";
+  ctx.strokeStyle = "white";
   ctx.lineWidth = 2;
 
   for (const p of fig) {
@@ -430,9 +435,6 @@ function renderFigureToImage(fig, size=128, margin=10, useColors=false) {
     ctx.fill();
     ctx.stroke();
   }
-  
-//document.body.appendChild(cvs);
-//cvs.style.border = "1px solid red";
   return ctx.getImageData(0,0,size,size);
 }
 
@@ -464,7 +466,10 @@ return {
   nearestEdge,
   snapPiece,
   
+  FIGURES,
   exportFigure,
-  matchCurrentFigureWith
+  makePiecesArray,
+  matchCurrentFigureWith,
+  renderFigureToImage
 };
 })();

@@ -80,7 +80,7 @@
 
 <div id="game-container" style="position:relative; overflow:hidden; touch-action:none; background: url('images/tilesets/tile_floor/20.png') repeat center center;">
   <div id="canvas-wrapper" style="transform-origin: 0 0;">
-    <canvas id="mazeCanvas"></canvas>
+    <canvas id="mainCanvas"></canvas>
   </div>
 
   <!-- Flèches overlay -->
@@ -129,7 +129,7 @@
       <div class="dropdown mb-3 mx-auto" id="skinMenu"></div>
       
       <!-- Choix du theme -->
-      <div class="dropdown mb-3 mx-auto" id="themeMenu"></div>
+      <div class="dropdown mb-3 mx-auto" id="targetMenu"></div>
 
       <!-- Choix de la difficulté -->
       <div class="dropdown mb-3 mx-auto" id="difficultyMenu"></div>
@@ -172,12 +172,13 @@ const CONFIG = {
     difficulty: "easy"
   },
   skin: "cat",
-  theme: "classic"
+  theme: "classic",
+  target: "heart"
 };
 
 
 /* === VARIABLES === */
-let canvas=document.getElementById("mazeCanvas")
+let canvas=document.getElementById("mainCanvas")
 let ctx=canvas.getContext("2d");
 
 
@@ -186,8 +187,7 @@ let gameActive=false;
 let isPaused = false;
 
 
-/* === SKINS === */
-const SKINS = {
+const THEMES = {
   mouse: {
     icon: "mouse.png",
     player: "mouse2.png",
@@ -203,14 +203,19 @@ const SKINS = {
   
 };
 
-/* === DIFFICULTÉS === */
+
 const DIFFICULTY = {
   easy:   {
     label: "Facile",
-    icon: "icons/icon-green-64.png"
+    icon: "icons/icon-green-64.png" // show picture w/ colors
   },
-  
+  difficult: {
+    label: "Difficile", // show pic in black
+    icon: "icons/icon-red-64.png"
+  }
 };
+
+
 
 // UI functions
 
@@ -244,8 +249,12 @@ function hideControls() {
 const wrapper = document.getElementById("canvas-wrapper");
 const container = document.getElementById("game-container");
 
-
-
+let targetImgData = null;
+function loadTarget(name) {
+  
+  targetImgData = Tangram.renderFigureToImage(Tangram.makePiecesArray(Tangram.FIGURES[name].pieces), 250, 20, CONFIG.gameplay.difficulty==="easy")
+  ctx.putImageData(targetImgData,0,0)
+}
 function rotateLeft() {
   const obj = Tangram.getSelectedObject();
   if (obj) {
@@ -280,9 +289,24 @@ function mirrorV() {
 
 function exportFigure() {
   console.log(JSON.stringify(Tangram.exportFigure()))
+  
+  S = 256
+  const cvs = document.createElement("canvas");
+  cvs.width = S;
+  cvs.height = S;
+  const ctx = cvs.getContext("2d");
+  let imgData = Tangram.renderFigureToImage(Tangram.makePiecesArray(Tangram.FIGURES[CONFIG.target].pieces), S, 20, true)
+  ctx.putImageData(imgData,0,0)
+  
+      const link = document.createElement('a');
+      link.download = `miniature-${CONFIG.target}.png`;
+      link.href = cvs.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 }
+
 function moveObject(name, x, y) {
-  if(!gameActive || isPaused) return false;
   Tangram.move(name,x,y)
   Tangram.selectObjectAt(x,y)
   showControls()
@@ -299,19 +323,23 @@ function clickBoard(x,y) {
 }
 
 function updateScene() {
+  //if(!gameActive || isPaused) return false;
   Tangram.redrawScene()
   checkMatch()
 }
 
 function checkMatch() {
-  result = Tangram.matchCurrentFigureWith("flower")
+  result = Tangram.matchCurrentFigureWith(CONFIG.target, 0.02)
   if (result.match) {
-    canvas.style.border="2px solid green"
+    canvas.style.border="2px solid lightgreen"
+    winGame()
   }
   else {
     canvas.style.border="2px solid red"
   }
+  ctx.putImageData(targetImgData,0,0)
 }
+
 const gameBoard = new GameBoard(canvas, container, wrapper, 
  Tangram.getObjectAt,
  moveObject,
@@ -373,14 +401,13 @@ async function startGame(){
   const size = DIFFICULTY[CONFIG.gameplay.difficulty].size
 
   canvas.width= 1000;
-  canvas.height= 1000;
+  canvas.height= 1200;
   Tangram.initTangram(canvas);
-
+  
+  loadTarget(CONFIG.target)
   gameActive=true;
   isPaused = false;
   
- // await buildMazeLayers(maze, mazeRows, mazeCols, cellSize, 0, 0, CONFIG.theme)
- // drawPlayer();
   
   stopAllMusic();
   playMusic("bgm");
@@ -397,6 +424,8 @@ async function startGame(){
 }
 
 function winGame() {
+    if (!gameActive || isPaused) return false;
+
     gameActive=false;
     gameTimer.pause()
     
@@ -452,13 +481,13 @@ document.addEventListener('deviceready', () => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-  preloadAllSkins(() => {
+  //preloadAllSkins(() => {
     document.getElementById("loadingMenu").classList.add( "d-none")
 //    buildMenu(SKINS, CONFIG.skin, "skinMenu", (sk)=>{CONFIG.skin = sk})
-//    buildMenu(THEMES, CONFIG.theme, "themeMenu", (th)=>{CONFIG.theme = th})
+    buildMenu(Tangram.FIGURES, CONFIG.target, "targetMenu", (th)=>{CONFIG.target = th})
     buildMenu(DIFFICULTY, CONFIG.gameplay.difficulty, "difficultyMenu", (th)=>{CONFIG.gameplay.difficulty = th})
     document.getElementById("startButton").disabled = false
-  });
+ // });
 });
 
 </script>
