@@ -2,11 +2,18 @@ Un jeu de labyrinthe simple pour les enfants.
 
 # Build
 
-À la racine, lancer:
+## Android (debug APK)
 
-```cordova platform add android```
+Depuis la racine du projet :
 
-```cordova build android```
+```bash
+# Requiert: cordova + Android SDK
+./build_app.sh Labyrinthe
+
+# Sortie: Labyrinthe.apk
+```
+
+(Le script exporte ANDROID_HOME et lance `cordova build android`.)
 
 # TODO, améliorations & idées
 * musiques de fond en fonction du thème
