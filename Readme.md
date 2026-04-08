@@ -13,7 +13,15 @@ Depuis la racine du projet :
 # Sortie: Labyrinthe.apk
 ```
 
-(Le script exporte ANDROID_HOME et lance `cordova build android`.)
+Équivalent (extrait de `build_app.sh`) :
+
+```bash
+export ANDROID_HOME=/opt/android-sdk/
+cd Labyrinthe
+cordova build android
+mv platforms/android/app/build/outputs/apk/debug/app-debug.apk ../Labyrinthe.apk
+```
+
 
 # TODO, améliorations & idées
 * musiques de fond en fonction du thème
